@@ -2,6 +2,7 @@ package hotresizer;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Properties;
 
 /**
  * Watches a folder for recurring modifications.
@@ -12,12 +13,12 @@ public abstract class FolderProcessor {
 	private static final long PROCESS_DELAY = 1000 * 60 * 1;
 
 	// milliseconds * seconds * minutes
-	private int pollingIntervall = 1000 * 60 * 1;
+	private static final int POLLING_INTERVAL = 1000 * 60 * 1;
 
-	protected File inputFolder;
-	protected File outputFolder;
-
-	private boolean isInterrupted = false;
+	protected Properties configuration;
+	
+	private File inputFolder;
+	private File outputFolder;
 
 	/**
 	 * Constructor.
@@ -27,10 +28,11 @@ public abstract class FolderProcessor {
 	 * @param outputFolder
 	 *            the folder where to put the result to.
 	 */
-	public FolderProcessor(File inputFolder, File outputFolder) {
+	public FolderProcessor(File inputFolder, File outputFolder, Properties configuration) {
 		this.inputFolder = inputFolder;
 		this.outputFolder = outputFolder;
-		
+		this.configuration = configuration;
+
 		inputFolder.mkdirs();
 		outputFolder.mkdirs();
 	}
@@ -41,43 +43,43 @@ public abstract class FolderProcessor {
 	 * This process never stops.
 	 */
 	public void processFolder() {
-		processFolder(inputFolder);
-	}
-
-	private void processFolder(File currentFolder) {
-		while (!this.isInterrupted) {
-			File[] files = currentFolder.listFiles();
-			if (files != null) {
-				for (File file : files) {
-					if (file.isDirectory())
-						this.processFolder(file);
-					else {
-						if (file.lastModified() + PROCESS_DELAY < System.currentTimeMillis()) {
-							File outputFile = new File(file.getAbsolutePath()
-									.replace(this.inputFolder.getAbsolutePath(), this.outputFolder.getAbsolutePath()));
-
-							if (outputFile.getParentFile().exists() || outputFile.getParentFile().mkdirs()) {
-								try {
-									processFile(file, outputFile);
-								} catch (IOException ioe) {
-									System.err.println("File " + file.getAbsolutePath() + " could not be process!");
-									ioe.printStackTrace();
-								}
-							}
-							file.delete();
-						}
-					}
-				}
-			}
-
+		while (true) {
+			processFolder(inputFolder);
 			try {
-				Thread.sleep(this.pollingIntervall);
+				Thread.sleep(POLLING_INTERVAL);
 			} catch (InterruptedException ie) {
 				System.err.println("Main Thread interrupted!");
 				ie.printStackTrace();
-				isInterrupted = true;
+				break;
 			}
 		}
+	}
+
+	private void processFolder(File currentFolder) {
+		File[] files = currentFolder.listFiles();
+		if (files != null) {
+			for (File file : files) {
+				if (file.isDirectory())
+					this.processFolder(file);
+				else {
+					if (file.lastModified() + PROCESS_DELAY < System.currentTimeMillis()) {
+						File outputFile = new File(file.getAbsolutePath().replace(this.inputFolder.getAbsolutePath(),
+								this.outputFolder.getAbsolutePath()));
+
+						if (outputFile.getParentFile().exists() || outputFile.getParentFile().mkdirs()) {
+							try {
+								processFile(file, outputFile);
+							} catch (IOException ioe) {
+								System.err.println("File " + file.getAbsolutePath() + " could not be process!");
+								ioe.printStackTrace();
+							}
+						}
+						file.delete();
+					}
+				}
+			}
+		}
+
 	}
 
 	/**

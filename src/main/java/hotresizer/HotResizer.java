@@ -62,7 +62,7 @@ public class HotResizer {
 		File inputFolder = new File(configuration.getProperty(PROP_INPUT_FOLDER));
 		File outputFolder = new File(configuration.getProperty(PROP_OUTPUT_FOLDER));
 
-		new ImageFileProcessor(inputFolder, outputFolder).processFolder();
+		new ImageFileProcessor(inputFolder, outputFolder, configuration).processFolder();
 	}
 
 	private void loadConfig(InputStream inputStream) {
