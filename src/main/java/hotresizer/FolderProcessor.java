@@ -13,7 +13,7 @@ public abstract class FolderProcessor {
 	private static final long PROCESS_DELAY = 1000 * 60 * 1;
 
 	// milliseconds * seconds * minutes
-	private static final int POLLING_INTERVAL = 1000 * 60 * 1;
+	private static final int POLLING_INTERVAL = 1000 * 30 * 1;
 
 	protected Properties configuration;
 	
@@ -59,9 +59,9 @@ public abstract class FolderProcessor {
 		File[] files = currentFolder.listFiles();
 		if (files != null) {
 			for (File file : files) {
-				if (file.isDirectory())
+				if (file.isDirectory()) {
 					this.processFolder(file);
-				else {
+				} else {
 					if (file.lastModified() + PROCESS_DELAY < System.currentTimeMillis()) {
 						File outputFile = new File(file.getAbsolutePath().replace(this.inputFolder.getAbsolutePath(),
 								this.outputFolder.getAbsolutePath()));
